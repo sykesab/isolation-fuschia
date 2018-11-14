@@ -1,0 +1,7 @@
+heuristics:
+
+distance from middle + own moves - opponent moves
+
+Strategies:
+Move towards middle
+try to put dividing line between self and opponent
