@@ -135,6 +135,34 @@ class Board:
 
         cls.CORNER_SQUARE_IDS = frozenset((0, n - 1, (m - 1) * n, m * n - 1))
 
+        # Compute the Chebyshev values
+        cls.CHEBYSHEV = {}
+
+        def compute_chebyshevs(id):
+            """
+            Compute the neighbors of id a Chebyshev distance of radius away
+            :param id: a square id
+            :return: a frozenset
+            """
+            cls.CHEBYSHEV[(id, 0)] = frozenset({id})
+            cls.CHEBYSHEV[(id, 1)] = Board.NEIGHBOR_SETS[id]
+            radius = 1
+            while id < max(Board.M, Board.N) and cls.CHEBYSHEV[(id, radius)]:
+                # Compute the squares at the next radius
+                squares = cls.CHEBYSHEV[(id, radius)]
+                surrounding_squares = set()
+                for square_id in squares:
+                    surrounding_squares.update(Board.NEIGHBOR_SETS[square_id])
+                radius += 1
+                for r in range(radius):
+                    # print('surrounding_squares:', surrounding_squares)
+                    # print('Removing', cls.CHEBYSHEV[(id, r)])
+                    surrounding_squares.difference_update(cls.CHEBYSHEV[(id, r)])
+                cls.CHEBYSHEV[(id, radius)] = frozenset(surrounding_squares)
+
+        for square_id in range(cls.M * cls.N):
+            compute_chebyshevs(square_id)
+
     def __init__(self):
         """
         Initialize a board
@@ -160,27 +188,70 @@ class Board:
         """
         return self._moves
 
-    def start_squares(self):
+    @classmethod
+    def start_squares(cls):
         """
         Get the ids of the two squares that tokens start on--that is,
         squares that can be occupied, but not pushed out
         :return: a tuple containing two square ids
         """
-        return self._start_squares
+        return cls.START_SPACE_IDS
 
-    def boundary_squares(self):
+    @classmethod
+    def boundary_squares(cls):
         """
         Return a frozenset of boundary square IDs
         :return: a frozenset
         """
-        return self.BOUNDARY_SQUARE_IDS
+        return cls.BOUNDARY_SQUARE_IDS
 
-    def corner_squares(self):
+    @classmethod
+    def corner_squares(cls):
         """
         Get a set of corner square IDs
         :return: frozenset
         """
-        return self.CORNER_SQUARE_IDS
+        return cls.CORNER_SQUARE_IDS
+
+    @classmethod
+    def squares_at_radius(cls, square_id, radius):
+        """
+        Get the square id's for squares a Chebyshev a given distance
+        from a given square
+        :param square_id: an int value in range(Board.M * Board.N)
+        :param radius: an int value k where 0 <= k < max(Board.M, Board.N)
+               that is the distance
+        :return: a set of square IDs
+        """
+        return cls.CHEBYSHEV.get((square_id, radius), frozenset())
+
+    @classmethod
+    def direction(cls, square_id1, square_id2):
+        """
+        Return the direction of square_id2 from square_id1
+        as a dy, dx pair
+        :param square_id1: a square id
+        :param square_id2: a square id
+        :return: a tuple (dx, dy), where -N < dx < N and
+                 -M < dy < M. A positive value of dx
+                 indicates that square 2 is below square 2.
+                 A positive value of dy indicates that square 2
+                 is to the right of square 1.
+        """
+        dx = abs(square_id2 % cls.N - square_id1 % cls.N)
+        dy = abs(square_id2 // cls.N - square_id1 // cls.N)
+
+    @classmethod
+    def distance_between(cls, square_id1, square_id2):
+        """
+        Get the Chebyshev distance from one square to another
+        :param square_id1: a square id
+        :param square_id2: a square id
+        :return: a non-negative int
+        """
+        dx = abs(square_id1 % cls.N - square_id2 % cls.N)
+        dy = abs(square_id1 // cls.N - square_id2 // cls.N)
+        return min(dx, dy)
 
     def make_move(self, token, move):
         """
@@ -447,6 +518,9 @@ class Match:
 
 def main():
 
+    # TODO
+    # This code needs some cleaning up!
+
     m, n = [int(s) for s in input("Enter m and n separated by a square: ").split()]
     Board.set_dimensions(m, n)
     board = Board()
@@ -460,7 +534,8 @@ def main():
     for id, neighbors in enumerate(board.NEIGHBOR_SETS):
         print('{:3d}: {}'.format(id, neighbors))
 
-    move = Move(6, 0)
+    sq_id = Board.START_SPACE_IDS[0]
+    move = Move(sq_id - n, sq_id)
     print(move)
     board.make_move(Board.BLUE_TOKEN, move)
     print(board)
@@ -469,7 +544,7 @@ def main():
     # Check some illegal moves
     try:
         # Move to self-occupied space
-        move = Move(6, 1)
+        move = Move(sq_id - n, 1)
         board.make_move(Board.BLUE_TOKEN, move)
         assert False
     except IllegalMove as e:
