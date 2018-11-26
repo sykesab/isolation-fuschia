@@ -2,27 +2,25 @@
 This module defines an Isolation game board class and an
 abstract player class.
 
-Add:
-    Board.squares_in_radius(square_id, d) --> a set of square id's for squares a distance of d moves away (on ANY board)
-    Board.distance(square_id1, square_id2) --> min number of moves to get from square 1 to square 2
-    Board.direction(square_id1, square_id2) --> (delta x, delta y
+Last update: 25 NOV 2018
 """
 from dataclasses import dataclass
 import math
 import sys
+import datetime
 
 
 @dataclass(frozen=True)
 class Move:
     """
     A Move object represents a move on a board: a square
-    for a token to move to and a square to punch out.
+    for a token to move to and a square to push out.
     """
     to_square_id: int
     pushout_square_id: int
 
     def __str__(self):
-        return 'Move to {}, punch {}.'.format(self.to_square_id, self.pushout_square_id)
+        return 'Move to {}, push out {}.'.format(self.to_square_id, self.pushout_square_id)
 
 
 class IllegalMove(Exception):
@@ -57,8 +55,8 @@ class Board:
 
     RED_TOKEN = '\u265F'
     BLUE_TOKEN = '\u2659'
-    TILE = '_'  # '\u25a1'
-    HOLE = '#'  # '\u25a0'
+    TILE = '\u00b7'  # '\u25a1'
+    HOLE = ' '  # '\u25a0'
 
     M = None
     N = None
@@ -181,6 +179,19 @@ class Board:
         self._token_locations = {Board.RED_TOKEN: Board.START_SPACE_IDS[1],
                                  Board.BLUE_TOKEN: Board.START_SPACE_IDS[0]}
 
+    def set_state(self, blue_square_id, red_square_id, pushed_out_ids):
+        """
+
+        :param blue_square_id: the ID of the square occupied by blue
+        :param red_square_id: the ID of the square occupied by red
+        :param pushed_out_ids: a sequence giving pushed-out squares
+        :return: None
+        """
+        self._token_locations[Board.BLUE_TOKEN] = blue_square_id
+        self._token_locations[Board.RED_TOKEN] = red_square_id
+        self._untiled_squares = frozenset(pushed_out_ids)
+        self._tiled_squares = frozenset(set(range(self.M * self.N)).difference(self._untiled_squares))
+
     def moves(self):
         """
         get the moves made so far
@@ -271,7 +282,7 @@ class Board:
                                                                              token_square_id))
 
         if to_square_id in self._untiled_squares:
-            raise IllegalMove('Square {} is already pushed out'.format(to_square_id))
+            raise IllegalMove('Square {} is pushed out'.format(to_square_id))
 
         if push_square_id in self._untiled_squares:
             raise IllegalPushOut('Square {} is already pushed out'.format(push_square_id))
@@ -380,7 +391,7 @@ class Board:
                 return Board.BLUE_TOKEN
             elif square_id == self._token_locations[Board.RED_TOKEN]:
                 return Board.RED_TOKEN
-            elif square_id in self._tiled_squares or square_id in self._start_squares:
+            elif square_id in self._tiled_squares:
                 return Board.TILE
             else:
                 assert square_id in self._untiled_squares, \
@@ -401,7 +412,7 @@ class Player:
         Initialize a player to participate in play
         as the token
         :param name: a string giving a player's name
-        :param token: a token in Board.TOKENS
+        :param token: one of Board.RED_TOKEN or Board.BLUE_TOKEN
         """
         self._name = name
         self._token = token
@@ -466,6 +477,7 @@ class Match:
             player = self._blue_player
             player_square_id = self._board.token_location(player.token())
             while self._board.neighbor_tiles(player_square_id):
+                print()
                 print(self._board)
 
                 # This player has a move
@@ -485,9 +497,10 @@ class Match:
             print(len(moves), 'moves.')
             print('Congratulations,', self._winner.name())
 
-            print(self.script())
+            # print(self.script())
+            self.script_csv(str(datetime.datetime.now()) + '.csv')
         except Exception as e:
-            print("OOPS!")
+            print("OOPS! Something went wrong.")
             print(self._board.square_id_map())
             print(self._board)
             print(e)
@@ -508,6 +521,22 @@ class Match:
         """
         return '[\n    {}\n]'.format(',\n    '.join(repr(move) for move in self.moves()))
 
+    def script_csv(self, filename='script.csv'):
+        """
+        Write the script to a CSV file having the given name
+        :param filename: a string giving a file name
+        :return: None
+        """
+        with open(filename, 'w') as csv_file:
+            print('token,move,push,win', file=csv_file)
+            tokens = ('red', 'blue')
+            moves = self.moves()
+            n = len(moves)
+            for i, move in enumerate(moves, 1):
+                print('{},{},{},{}'.format(tokens[i % 2], move.to_square_id,
+                                           move.pushout_square_id, int(i == n)),
+                      file=csv_file)
+
     def winner(self):
         """
         Return th match winner if the game is over
@@ -521,8 +550,19 @@ def main():
     # TODO
     # This code needs some cleaning up!
 
-    m, n = [int(s) for s in input("Enter m and n separated by a square: ").split()]
+    # m, n = [int(s) for s in input("Enter m and n separated by a square: ").split()]
+    m, n = 6, 8
     Board.set_dimensions(m, n)
+
+    state_board = Board()
+    print('Board map:')
+    print(state_board.square_id_map())
+    state_board.set_state(0, m * n - 1, range(1, m * n - 1, 2))
+    print('Board state:')
+    print(state_board)
+    print('*' * 24)
+    print()
+
     board = Board()
     print(board)
     print('ID map:')
@@ -535,6 +575,7 @@ def main():
         print('{:3d}: {}'.format(id, neighbors))
 
     sq_id = Board.START_SPACE_IDS[0]
+    opp_sq_id = Board.START_SPACE_IDS[1]
     move = Move(sq_id - n, sq_id)
     print(move)
     board.make_move(Board.BLUE_TOKEN, move)
@@ -546,51 +587,51 @@ def main():
         # Move to self-occupied space
         move = Move(sq_id - n, 1)
         board.make_move(Board.BLUE_TOKEN, move)
-        assert False
+        sys.exit(1)
     except IllegalMove as e:
         print("Good!", e)
     try:
         # Move to opponent-occupied space
         move = Move(11, 1)
         board.make_move(Board.BLUE_TOKEN, move)
-        assert False
+        sys.exit(2)
     except IllegalMove as e:
         print("Good!", e)
     try:
         # Move to already-punched space
         move = Move(0, 1)
         board.make_move(Board.BLUE_TOKEN, move)
-        assert False
+        sys.exit(3)
     except IllegalMove as e:
         print("Good!", e)
     try:
         # Move to non-neighboring space
         move = Move(18, 1)
         board.make_move(Board.BLUE_TOKEN, move)
-        assert False
+        sys.exit(4)
     except IllegalMove as e:
         print("Good!", e)
 
     try:
         # Push out an already-pushed-out square
         print(board)
-        move = Move(12, 0)
+        move = Move(17, sq_id)
         board.make_move(Board.BLUE_TOKEN, move)
-        assert False
+        sys.exit(5)
     except IllegalPushOut as e:
         print("Good!", e)
     try:
         # Push out an occupied square
-        move = Move(12, 11)
+        move = Move(25, 11)
         board.make_move(Board.BLUE_TOKEN, move)
-        assert False
+        sys.exit(6)
     except IllegalPushOut as e:
         print("Good!", e)
     try:
         # Push out the square just moved TO
         move = Move(12, 12)
         board.make_move(Board.BLUE_TOKEN, move)
-        assert False
+        sys.exit(7)
     except IllegalPushOut as e:
         print("Good!", e)
 
