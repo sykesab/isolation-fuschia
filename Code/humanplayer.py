@@ -14,7 +14,7 @@ class HumanPlayer(isolation.Player):
     upon initialization, then the moves in the script are used
     before a prompt is issued.
 
-    There is currently no checking for invalid inputse
+    There is currently no checking for invalid inputs
     """
 
     def __init__(self, name, token, script=[]):
@@ -71,17 +71,20 @@ class HumanPlayer(isolation.Player):
 
 
 if __name__ == '__main__':
+    isolation.Board.set_dimensions(6, 8)
     # # Create a match
-    # isolation.Board.set_dimensions(4, 6)
     # ref = isolation.Match(HumanPlayer('Blue', isolation.Board.BLUE_TOKEN),
-    #                       HumanPlayer('Red', isolation.Board.RED_TOKEN))
+    #                       HumanPlayer('Red', isolation.Board.RED_TOKEN),
+    #                       Board())
     # ref.start_play()
 
     # Create a match using a script in a file
     print()
     print('Start scripted game')
-    isolation.Board.set_dimensions(6, 8)
-    ref = isolation.Match(HumanPlayer('Blue', isolation.Board.BLUE_TOKEN, '2018-11-25 15:52:29.435889.csv'),
-                          HumanPlayer('Red', isolation.Board.RED_TOKEN, '2018-11-25 15:52:29.435889.csv'))
+    ref = isolation.Match(HumanPlayer('Blue', isolation.Board.BLUE_TOKEN,
+                                      '2018-11-25 15:52:29.435889.csv'),
+                          HumanPlayer('Red', isolation.Board.RED_TOKEN,
+                                      '2018-11-25 15:52:29.435889.csv'),
+                          isolation.Board())
     ref.start_play()
 

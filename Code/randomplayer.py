@@ -58,7 +58,8 @@ if __name__ == '__main__':
     # Create a match
     isolation.Board.set_dimensions(6, 8)
     match = isolation.Match(RandomPlayer('Blue', isolation.Board.BLUE_TOKEN),
-                            RandomPlayer('Red', isolation.Board.RED_TOKEN))
+                            RandomPlayer('Red', isolation.Board.RED_TOKEN),
+                            isolation.Board())
     match.start_play()
 
     # # Play 100 more matches

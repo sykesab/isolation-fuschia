@@ -2,7 +2,9 @@
 This module defines an Isolation game board class and an
 abstract player class.
 
-Last update: 25 NOV 2018
+Last update: 26 NOV 2018
+    - Moved start squares
+    - Added board parameter to Match.__init__()
 """
 from dataclasses import dataclass
 import math
@@ -78,8 +80,8 @@ class Board:
 
         # Determine where the tokens start. Note: no player may
         # punch a start square, but may move to one
-        blue_start_square_id = (m // 2) * n
-        red_start_square_id = ((m - 1) // 2) * n + (n - 1)
+        blue_start_square_id = ((m // 2) - 1) * n
+        red_start_square_id = m * n - blue_start_square_id - 1 # ((m - 1) // 2) * n + (n - 1)
         cls.START_SPACE_IDS = (blue_start_square_id, red_start_square_id)
 
         # Create a structure that provides a lookup table for the
@@ -450,15 +452,16 @@ class Match:
     NOTE: The time limit enforcement is not yet available.
     """
 
-    def __init__(self, blue_player, red_player):
+    def __init__(self, blue_player, red_player, board):
         """
-        Initialize a game with two players. The board has
-        m rows and n columns. The Blue Player moves first.
+        Initialize a game with two players and a board.
+        The Blue Player moves first.
         :param blue_player: a Player object
         :param red_player: a Player object
-
+        :param board: the board to start with
+        :return: None
         """
-        self._board = Board()
+        self._board = board
 
         self._blue_player = blue_player
         self._red_player = red_player
@@ -505,7 +508,7 @@ class Match:
             print(self._board)
             print(e)
             print(self.script())
-            sys.exit(1)
+            sys.exit(10)
 
     def moves(self):
         """
@@ -549,8 +552,7 @@ def main():
 
     # TODO
     # This code needs some cleaning up!
-
-    # m, n = [int(s) for s in input("Enter m and n separated by a square: ").split()]
+    # A board must be 6x8 for this code to work properly.
     m, n = 6, 8
     Board.set_dimensions(m, n)
 
@@ -636,7 +638,8 @@ def main():
         print("Good!", e)
 
     ref = Match(Player('Blue player', Board.BLUE_TOKEN),
-                Player('Red player', Board.RED_TOKEN))
+                Player('Red player', Board.RED_TOKEN),
+                Board())
 
 
 if __name__ == '__main__':
