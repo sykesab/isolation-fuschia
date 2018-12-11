@@ -247,7 +247,7 @@ class Board:
         :param square_id2: a square id
         :return: a tuple (dx, dy), where -N < dx < N and
                  -M < dy < M. A positive value of dx
-                 indicates that square 2 is below square 2.
+                 indicates that square 2 is below square 1.
                  A positive value of dy indicates that square 2
                  is to the right of square 1.
         """
