@@ -8,6 +8,14 @@ import itertools
 
 class Node:
     def __init__(self, board, move, token, is_max=True, last_move=None):
+        """
+
+        :param board: a copy of the Board object
+        :param move: a Move to be made
+        :param token: the Player token that is currently moving
+        :param is_max: True if this row is a Max row
+        :param last_move: the last Move made.
+        """
         self._board = board
         self._token = token
         self._board.make_move(self._token, move)
@@ -16,6 +24,13 @@ class Node:
             self._opponent = isolation.Board.BLUE_TOKEN
         else:
             self._opponent = isolation.Board.RED_TOKEN
+
+        neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
+        current_location = self._board.token_location(self._token)
+        push_out_squares = self._board.push_outable_square_ids()
+        push_out_squares.add(current_location)
+        self._available = [isolation.Move(idm, idt) for idm, idt
+                          in itertools.product(neighbors, push_out_squares) if idm != idt]
 
         self._move = move
         self._is_max = is_max
