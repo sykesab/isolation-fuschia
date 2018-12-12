@@ -110,34 +110,35 @@ class FuchsiaPlayer(isolation.Player):
         :return: Return a Move object
         """
 
-        print("\n{} taking turn: ".format(self._name), end='')
+        #print("\n{} taking turn: ".format(self._name), end='')
 
         # h_value = self._h(board)
         #
         # Collect board state info to generate a move from
-        space_id = board.token_location(self._token)
-        neighbors = board.neighbor_tiles(space_id)
-        print('possible moves:', neighbors)
-        tiled_spaces = board.push_outable_square_ids()
+        #space_id = board.token_location(self._token)
+        #neighbors = board.neighbor_tiles(space_id)
+        #print('possible moves:', neighbors)
+        #tiled_spaces = board.push_outable_square_ids()
 
         # Select a square to move to and a tile to push out.
         # Once a neighbor square is chosen to move to,
         # that square can no longer be pushed out, but
         # the square vacated might be able to be pushed out
-        to_space_id = random.choice(list(neighbors))
+        #to_space_id = random.choice(list(neighbors))
 
-        tiled_spaces.discard(to_space_id)
+        #tiled_spaces.discard(to_space_id)
         # if space_id not in board.start_squares():
         #     tiled_spaces.add(space_id)
-        tiled_spaces.add(space_id)
-        print('possible push outs:', tiled_spaces)
+        #tiled_spaces.add(space_id)
+        #print('possible push outs:', tiled_spaces)
+
         push_out_space_id = random.choice(list(tiled_spaces))
 
         # print('    Moving to', to_space_id, 'and pushing out', push_out_space_id)
 
-        score, move = self.minmax_alpha_beta(board, -math.inf, math.inf)
-        print('   ', move)
-        return move
+        #score, move = self.minmax_alpha_beta(board, -math.inf, math.inf)
+        #print('   ', move)
+        return self.early_game_strategy(board)
 
     def choose_move(self, board):
         self_location = board.token_location(self._token)
@@ -172,6 +173,42 @@ class FuchsiaPlayer(isolation.Player):
                 closest_middle_space = mid
                 min_distance = distance_to_middle
         return min_distance, closest_middle_space
+
+    def early_game_strategy(self, board):
+        # move towards the middle of the board
+        # pop the tile 2 away from
+
+        move_to_make = self.move_towards_middle_earlystrat(board)
+        punch_out_tile = self.punch_out_early_strat(board)
+        return isolation.Board.make_move(self._token, isolation.Move(move_to_make, punch_out_tile))
+
+    def move_towards_middle_early_strat(self, board):
+        min_distance_to_middle, closest_middle_space = self.get_distance_to_middle(board)
+        dx, dy = min_distance_to_middle
+        our_moves = board.neighbor_tiles(board.token_location(self._token))
+        best_move = len(isolation.Board.neighbor_tiles(our_moves[0])) - dx + dy
+
+        for move in our_moves:
+            possible_move = len(isolation.Board.neighbor_tiles(move)) - dx + dy
+            if possible_move > best_move:
+                best_move = possible_move
+
+        to_square_id = best_move
+        return to_square_id
+
+    def punch_out_early_strat(self, board):
+        min_distance_to_middle, closest_middle_space = self.get_distance_to_middle(board)
+        dx, dy = min_distance_to_middle
+        opponent_moves = board.neighbor_tiles(board.token_location(self._opponent))
+        best_move = len(isolation.Board.neighbor_tiles(opponent_moves[0])) - dx + dy
+
+        for move in opponent_moves:
+            possible_move = len(isolation.Board.neighbor_tiles(move)) - dx + dy
+            if possible_move > best_move:
+                best_move = possible_move
+
+        to_square_id = best_move
+        return to_square_id
 
     def minimax_alpha_beta(self, n, a, b, depth=0):
         best = None
