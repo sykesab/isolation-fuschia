@@ -1,3 +1,8 @@
+"""
+A random player selects moves randomly.
+
+Last update: 25 NOV 2018
+"""
 import isolation
 import random
 
@@ -51,14 +56,15 @@ class RandomPlayer(isolation.Player):
 
 if __name__ == '__main__':
     # Create a match
-    isolation.Board.set_dimensions(6, 7)
+    isolation.Board.set_dimensions(6, 8)
     match = isolation.Match(RandomPlayer('Blue', isolation.Board.BLUE_TOKEN),
-                            RandomPlayer('Red', isolation.Board.RED_TOKEN))
+                            RandomPlayer('Red', isolation.Board.RED_TOKEN),
+                            isolation.Board())
     match.start_play()
 
-    # Play 100 more matches
-    for i in range(100):
-        match = isolation.Match(RandomPlayer('Blue', isolation.Board.BLUE_TOKEN),
-                                RandomPlayer('Red', isolation.Board.RED_TOKEN))
-        print(match.start_play())
-        print('*' * 40)
+    # # Play 100 more matches
+    # for i in range(100):
+    #     match = isolation.Match(RandomPlayer('Blue', isolation.Board.BLUE_TOKEN),
+    #                             RandomPlayer('Red', isolation.Board.RED_TOKEN))
+    #     print(match.start_play())
+    #     print('*' * 40)
