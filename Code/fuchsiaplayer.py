@@ -7,16 +7,17 @@ import itertools
 
 
 class Node:
-    def __init__(self, board, token, available, is_max=True, last_move=None):
+    def __init__(self, board, move, token, is_max=True, last_move=None):
         self._board = board
         self._token = token
+        self._board.make_move(self._token, move)
 
         if token is isolation.Board.RED_TOKEN:
             self._opponent = isolation.Board.BLUE_TOKEN
         else:
             self._opponent = isolation.Board.RED_TOKEN
 
-        self._available = available
+        self._move = move
         self._is_max = is_max
         self._last_move = last_move
         self.allchildren = None
@@ -52,9 +53,9 @@ class Node:
             #                   in itertools.product(neighbors, push_out_squares) if idm != idt]
 
             self.allchildren = [
-                Node(self._board,
+                Node(copy.deepcopy(self._board),
+                     selected_move,
                      self._opponent,
-                     [e for e in self._available if e is not selected_move],
                      is_max=not self._is_max,
                      last_move=selected_move)
                 for selected_move in self._available]
