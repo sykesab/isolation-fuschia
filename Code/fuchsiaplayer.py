@@ -190,33 +190,36 @@ class FuchsiaPlayer(isolation.Player):
         # pop the tile 2 away from
 
         move_to_make = self.move_towards_middle_early_strat(board)
-        punch_out_tile = self.punch_out_early_strat(board)
-        return isolation.Board.make_move(self._token, isolation.Move(move_to_make, punch_out_tile))
-
+        punch_out_tile = self.punch_out_early_strat(board, move_to_make)
+        return isolation.Move(move_to_make, punch_out_tile)
+    
     def move_towards_middle_early_strat(self, board):
         min_distance_to_middle, closest_middle_space = self.get_distance_to_middle(board)
-        dx, dy = min_distance_to_middle
-        our_moves = board.neighbor_tiles(board.token_location(self._token))
-        best_move = len(isolation.Board.neighbor_tiles(our_moves[0])) - dx + dy
+        our_moves = list(board.neighbor_tiles(board.token_location(self._token)))
+        # x = our_moves[0]
+        # possible_moves = isolation.Board.neighbor_tiles(x)
+        best_move = len(board.neighbor_tiles(our_moves[0])) - min_distance_to_middle
+        # best_move = 0
 
         for move in our_moves:
-            possible_move = len(isolation.Board.neighbor_tiles(move)) - dx + dy
+            possible_move = len(board.neighbor_tiles(move)) - min_distance_to_middle
             if possible_move > best_move:
-                best_move = possible_move
+                if move not in board.pushed_out_square_ids():
+                    best_move = move
 
-        to_square_id = best_move
-        return to_square_id
+        return best_move
 
-    def punch_out_early_strat(self, board):
+
+    def punch_out_early_strat(self, board, move_to_tile):
         min_distance_to_middle, closest_middle_space = self.get_distance_to_middle(board)
-        dx, dy = min_distance_to_middle
-        opponent_moves = board.neighbor_tiles(board.token_location(self._opponent))
-        best_move = len(isolation.Board.neighbor_tiles(opponent_moves[0])) - dx + dy
+        opponent_moves = list(board.neighbor_tiles(board.token_location(self._opponent)))
+        best_move = len(list(board.neighbor_tiles(opponent_moves[0]))) - min_distance_to_middle
 
         for move in opponent_moves:
-            possible_move = len(isolation.Board.neighbor_tiles(move)) - dx + dy
-            if possible_move > best_move:
-                best_move = possible_move
+            possible_move = len(list(board.neighbor_tiles(move))) - min_distance_to_middle
+            if possible_move >= best_move:
+                if move != move_to_tile:
+                    best_move = move
 
         to_square_id = best_move
         return to_square_id
