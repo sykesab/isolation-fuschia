@@ -234,46 +234,6 @@ class FuchsiaPlayer(isolation.Player):
                     best = path
             return b, best
 
-
-        # best = None
-        #
-        # if self.board_is_end_state(n):
-        #     return self._h(n), None
-        # elif self.is_max_node():
-        #     neighbors = n.neighbor_tiles(n.token_location(self._token))
-        #     for possible_move in neighbors:
-        #         for push_outable_square in n.push_outable_square_ids():
-        #             pushed_out_squares = n.pushed_out_square_ids()
-        #             pushed_out_squares.add(push_outable_square)
-        #
-        #             child_board = isolation.Board()
-        #             child_board.set_state(possible_move, n.token_location(self._opponent), pushed_out_squares)
-        #             score, path = self.minmax_alpha_beta(child_board, a, b)
-        #
-        #             if score >= b:
-        #                 return score, None
-        #             elif score > a:
-        #                 a = score
-        #                 best = isolation.Move(possible_move, push_outable_square)
-        #             return a, best
-        # else:
-        #     neighbors = n.neighbor_tiles(n.token_location(self._token))
-        #     for possible_move in neighbors:
-        #         for push_outable_square in n.push_outable_square_ids():
-        #             pushed_out_squares = n.pushed_out_square_ids()
-        #             pushed_out_squares.add(push_outable_square)
-        #
-        #             child_board = copy.deepcopy(n)
-        #             child_board.make_move(self._token, isolation.Move(possible_move, push_outable_square))
-        #             score, path = self.minmax_alpha_beta(child_board, a, b)
-        #
-        #             if score <= a:
-        #                 return score, None
-        #             elif score < b:
-        #                 b = score
-        #                 best = isolation.Move(possible_move, push_outable_square)
-        #             return b, best
-
     def board_is_end_state(self, board):
         self_location = board.token_location(self._token)
         opponent_location = board.token_location(self._opponent)
