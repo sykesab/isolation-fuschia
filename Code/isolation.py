@@ -265,7 +265,7 @@ class Board:
         """
         dx = abs(square_id1 % cls.N - square_id2 % cls.N)
         dy = abs(square_id1 // cls.N - square_id2 // cls.N)
-        return min(dx, dy)
+        return max(dx, dy)
 
     def make_move(self, token, move):
         """
