@@ -44,12 +44,12 @@ class Node:
 
     def children(self):
         if self.allchildren is None:
-            neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
-            current_location = self._board.token_location(self._token)
-            push_out_squares = self._board.push_outable_square_ids()
-            push_out_squares.add(current_location)
-            self._available = [isolation.Move(idm, idt) for idm, idt
-                               in itertools.product(neighbors, push_out_squares) if idm != idt]
+            #neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
+            #current_location = self._board.token_location(self._token)
+            #push_out_squares = self._board.push_outable_square_ids()
+            #push_out_squares.add(current_location)
+            #self._available = [isolation.Move(idm, idt) for idm, idt
+            #                   in itertools.product(neighbors, push_out_squares) if idm != idt]
 
             self.allchildren = [
                 Node(self._board,
@@ -110,7 +110,7 @@ class FuchsiaPlayer(isolation.Player):
         :return: Return a Move object
         """
 
-        #print("\n{} taking turn: ".format(self._name), end='')
+        print("\n{} taking turn: \n".format(self._name), end='')
 
         # h_value = self._h(board)
         #
@@ -136,9 +136,19 @@ class FuchsiaPlayer(isolation.Player):
 
         # print('    Moving to', to_space_id, 'and pushing out', push_out_space_id)
 
-        #score, move = self.minmax_alpha_beta(board, -math.inf, math.inf)
+        neighbors = board.neighbor_tiles(board.token_location(self._token))
+        current_location = board.token_location(self._token)
+        push_out_squares = board.push_outable_square_ids()
+        push_out_squares.add(current_location)
+        available = [isolation.Move(idm, idt) for idm, idt
+                           in itertools.product(neighbors, push_out_squares) if idm != idt]
+
+        n = Node(board, self._token, available)
+
+        score, move = self.minimax_alpha_beta(n, -math.inf, math.inf)
         #print('   ', move)
         return self.early_game_strategy(board)
+
 
     def choose_move(self, board):
         self_location = board.token_location(self._token)
@@ -181,7 +191,7 @@ class FuchsiaPlayer(isolation.Player):
         move_to_make = self.move_towards_middle_early_strat(board)
         punch_out_tile = self.punch_out_early_strat(board, move_to_make)
         return isolation.Move(move_to_make, punch_out_tile)
-
+    
     def move_towards_middle_early_strat(self, board):
         min_distance_to_middle, closest_middle_space = self.get_distance_to_middle(board)
         our_moves = list(board.neighbor_tiles(board.token_location(self._token)))
