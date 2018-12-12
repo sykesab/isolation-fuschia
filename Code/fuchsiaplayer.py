@@ -5,6 +5,85 @@ import math
 import copy
 
 
+# class Node:
+#     def __init__(self, is_max, value, children):
+#         self.is_max = is_max
+#         self.value = value
+#         self.allchildren = children
+#
+#     def is_leaf(self):
+#         return self.allchildren is None
+#
+#     def children(self):
+#         return self.allchildren
+#
+#     def evaluate(self):
+#         return self.value
+
+
+class Node:
+    def __init__(self, board, value, children, token, opponent, is_max=True):
+        self._board = board
+        self._is_max = is_max
+        self._value = value
+        self._children = children
+        self._token = token
+        self._opponent = opponent
+
+    def is_leaf(self):
+        if self._is_max:
+            self_location = self._board.token_location(self._token)
+            self_neighbor_tiles = self._board.neighbor_tiles(self_location)
+            return len(self_neighbor_tiles) == 0
+        else:
+            opponent_location = self._board.token_location(self._opponent)
+            opponent_neighbor_tiles = self._board.neighbor_tiles(opponent_location)
+            return len(opponent_neighbor_tiles) == 0
+
+    def is_loser(self):
+        if self.is_leaf():
+            return self._is_max
+
+    def is_winner(self):
+        if self.is_leaf():
+            return not self._is_max
+
+    def is_max(self):
+        return self._is_max
+
+    def children(self):
+        moves = set()
+        neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
+        for possible_move in neighbors:
+            for push_outable_square in self._board.push_outable_square_ids():
+                moves.add(isolation.Move(possible_move, push_outable_square))
+
+        for move in moves:
+            child_board = copy.deepcopy(self._board)
+            child_board.make_move(self._token, move)
+
+            self._children.append(Node(child_board,
+                                       self.evaluate(),
+                                       self._children,
+                                       self._opponent,
+                                       self._token,
+                                       not self._is_max))
+
+        return self._children
+
+    def evaluate(self):
+        distance_to_middle, closest_mid = self.get_distance_to_middle(self._board)
+
+        opponent_moves = self._board.neighbor_tiles(self._board.token_location(self._opponent))
+        our_moves = self._board.neighbor_tiles(self._board.token_location(self._token))
+
+        num_opponent_moves = len(opponent_moves)
+        num_our_moves = len(our_moves)
+
+        h_value = distance_to_middle + (num_opponent_moves - num_our_moves)
+        return h_value
+
+
 class FuchsiaPlayer(isolation.Player):
 
     def __init__(self, name, token):
@@ -61,7 +140,7 @@ class FuchsiaPlayer(isolation.Player):
 
         distance_to_middle, closest_middle = self.get_distance_to_middle(board)
         dir_x, dir_y = board.direction(self_location, closest_middle)
-        
+
 
     def _h(self, board):
         distance_to_middle, closest_mid = self.get_distance_to_middle(board)
@@ -90,45 +169,69 @@ class FuchsiaPlayer(isolation.Player):
                 min_distance = distance_to_middle
         return min_distance, closest_middle_space
 
-    def minmax_alpha_beta(self, n, a, b):
+    def minimax_alpha_beta(self, n, a, b, depth=0):
         best = None
 
-        if self.board_is_end_state(n):
-            return self._h(n), None
-        elif self.is_max_node():
-            neighbors = n.neighbor_tiles(n.token_location(self._token))
-            for possible_move in neighbors:
-                for push_outable_square in n.push_outable_square_ids():
-                    pushed_out_squares = n.pushed_out_square_ids()
-                    pushed_out_squares.add(push_outable_square)
-
-                    child_board = isolation.Board()
-                    child_board.set_state(possible_move, n.token_location(self._opponent), pushed_out_squares)
-                    score, path = self.minmax_alpha_beta(child_board, a, b)
-
-                    if score >= b:
-                        return score, None
-                    elif score > a:
-                        a = score
-                        best = isolation.Move(possible_move, push_outable_square)
-                    return a, best
+        if n.is_leaf():
+            return n.evaluate(), None
+        elif n.is_max():
+            for child_node in n.children():
+                score, path = self.minimax_alpha_beta(child_node, a, b, depth + 1)
+                if score >= b:
+                    return score, None
+                if score > a:
+                    a = score
+                    best = path
+            return a, best
         else:
-            neighbors = n.neighbor_tiles(n.token_location(self._token))
-            for possible_move in neighbors:
-                for push_outable_square in n.push_outable_square_ids():
-                    pushed_out_squares = n.pushed_out_square_ids()
-                    pushed_out_squares.add(push_outable_square)
+            for child_node in n.children():
+                score, path = self.minimax_alpha_beta(child_node, a, b, depth + 1)
+                if score <= a:
+                    return score, None
+                if score < b:
+                    b = score
+                    best = path
+            return b, best
 
-                    child_board = copy.deepcopy(n)
-                    child_board.make_move(self._token, isolation.Move(possible_move, push_outable_square))
-                    score, path = self.minmax_alpha_beta(child_board, a, b)
 
-                    if score <= a:
-                        return score, None
-                    elif score < b:
-                        b = score
-                        best = isolation.Move(possible_move, push_outable_square)
-                    return b, best
+        # best = None
+        #
+        # if self.board_is_end_state(n):
+        #     return self._h(n), None
+        # elif self.is_max_node():
+        #     neighbors = n.neighbor_tiles(n.token_location(self._token))
+        #     for possible_move in neighbors:
+        #         for push_outable_square in n.push_outable_square_ids():
+        #             pushed_out_squares = n.pushed_out_square_ids()
+        #             pushed_out_squares.add(push_outable_square)
+        #
+        #             child_board = isolation.Board()
+        #             child_board.set_state(possible_move, n.token_location(self._opponent), pushed_out_squares)
+        #             score, path = self.minmax_alpha_beta(child_board, a, b)
+        #
+        #             if score >= b:
+        #                 return score, None
+        #             elif score > a:
+        #                 a = score
+        #                 best = isolation.Move(possible_move, push_outable_square)
+        #             return a, best
+        # else:
+        #     neighbors = n.neighbor_tiles(n.token_location(self._token))
+        #     for possible_move in neighbors:
+        #         for push_outable_square in n.push_outable_square_ids():
+        #             pushed_out_squares = n.pushed_out_square_ids()
+        #             pushed_out_squares.add(push_outable_square)
+        #
+        #             child_board = copy.deepcopy(n)
+        #             child_board.make_move(self._token, isolation.Move(possible_move, push_outable_square))
+        #             score, path = self.minmax_alpha_beta(child_board, a, b)
+        #
+        #             if score <= a:
+        #                 return score, None
+        #             elif score < b:
+        #                 b = score
+        #                 best = isolation.Move(possible_move, push_outable_square)
+        #             return b, best
 
     def board_is_end_state(self, board):
         self_location = board.token_location(self._token)
