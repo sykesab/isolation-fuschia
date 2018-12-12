@@ -44,11 +44,11 @@ class Node:
 
     def children(self):
         if self.allchildren is None:
-            #neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
-            #current_location = self._board.token_location(self._token)
-            #push_out_squares = self._board.push_outable_square_ids()
-            #push_out_squares.add(current_location)
-            #self._available = [isolation.Move(idm, idt) for idm, idt
+            # neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
+            # current_location = self._board.token_location(self._token)
+            # push_out_squares = self._board.push_outable_square_ids()
+            # push_out_squares.add(current_location)
+            # self._available = [isolation.Move(idm, idt) for idm, idt
             #                   in itertools.product(neighbors, push_out_squares) if idm != idt]
 
             self.allchildren = [
@@ -115,24 +115,24 @@ class FuchsiaPlayer(isolation.Player):
         # h_value = self._h(board)
         #
         # Collect board state info to generate a move from
-        #space_id = board.token_location(self._token)
-        #neighbors = board.neighbor_tiles(space_id)
-        #print('possible moves:', neighbors)
-        #tiled_spaces = board.push_outable_square_ids()
+        # space_id = board.token_location(self._token)
+        # neighbors = board.neighbor_tiles(space_id)
+        # print('possible moves:', neighbors)
+        # tiled_spaces = board.push_outable_square_ids()
 
         # Select a square to move to and a tile to push out.
         # Once a neighbor square is chosen to move to,
         # that square can no longer be pushed out, but
         # the square vacated might be able to be pushed out
-        #to_space_id = random.choice(list(neighbors))
+        # to_space_id = random.choice(list(neighbors))
 
-        #tiled_spaces.discard(to_space_id)
+        # tiled_spaces.discard(to_space_id)
         # if space_id not in board.start_squares():
         #     tiled_spaces.add(space_id)
-        #tiled_spaces.add(space_id)
-        #print('possible push outs:', tiled_spaces)
+        # tiled_spaces.add(space_id)
+        # print('possible push outs:', tiled_spaces)
 
-        #push_out_space_id = random.choice(list(tiled_spaces))
+        # push_out_space_id = random.choice(list(tiled_spaces))
 
         # print('    Moving to', to_space_id, 'and pushing out', push_out_space_id)
 
@@ -141,14 +141,13 @@ class FuchsiaPlayer(isolation.Player):
         push_out_squares = board.push_outable_square_ids()
         push_out_squares.add(current_location)
         available = [isolation.Move(idm, idt) for idm, idt
-                           in itertools.product(neighbors, push_out_squares) if idm != idt]
+                     in itertools.product(neighbors, push_out_squares) if idm != idt]
 
         n = Node(board, self._token, available)
 
         score, move = self.minimax_alpha_beta(n, -math.inf, math.inf)
-        #print('   ', move)
+        # print('   ', move)
         return self.early_game_strategy(board)
-
 
     def choose_move(self, board):
         self_location = board.token_location(self._token)
@@ -191,7 +190,7 @@ class FuchsiaPlayer(isolation.Player):
         move_to_make = self.move_towards_middle_early_strat(board)
         punch_out_tile = self.punch_out_early_strat(board, move_to_make)
         return isolation.Move(move_to_make, punch_out_tile)
-    
+
     def move_towards_middle_early_strat(self, board):
         min_distance_to_middle, closest_middle_space = self.get_distance_to_middle(board)
         our_moves = list(board.neighbor_tiles(board.token_location(self._token)))
@@ -207,7 +206,6 @@ class FuchsiaPlayer(isolation.Player):
                     best_move = move
 
         return best_move
-
 
     def punch_out_early_strat(self, board, move_to_tile):
         min_distance_to_middle, closest_middle_space = self.get_distance_to_middle(board)
@@ -274,4 +272,3 @@ if __name__ == '__main__':
     #                             RandomPlayer('Red', isolation.Board.RED_TOKEN))
     #     print(match.start_play())
     #     print('*' * 40)
-
