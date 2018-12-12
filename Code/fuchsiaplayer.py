@@ -3,32 +3,23 @@ import randomplayer
 import random
 import math
 import copy
-
-
-# class Node:
-#     def __init__(self, is_max, value, children):
-#         self.is_max = is_max
-#         self.value = value
-#         self.allchildren = children
-#
-#     def is_leaf(self):
-#         return self.allchildren is None
-#
-#     def children(self):
-#         return self.allchildren
-#
-#     def evaluate(self):
-#         return self.value
+import itertools
 
 
 class Node:
-    def __init__(self, board, value, children, token, opponent, is_max=True):
+    def __init__(self, board, token, available, is_max=True, last_move=None):
         self._board = board
-        self._is_max = is_max
-        self._value = value
-        self._children = children
         self._token = token
-        self._opponent = opponent
+
+        if token is isolation.Board.RED_TOKEN:
+            self._opponent = isolation.Board.BLUE_TOKEN
+        else:
+            self._opponent = isolation.Board.RED_TOKEN
+
+        self._available = available
+        self._is_max = is_max
+        self._last_move = last_move
+        self.allchildren = None
 
     def is_leaf(self):
         if self._is_max:
@@ -52,27 +43,26 @@ class Node:
         return self._is_max
 
     def children(self):
-        moves = set()
-        neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
-        for possible_move in neighbors:
-            for push_outable_square in self._board.push_outable_square_ids():
-                moves.add(isolation.Move(possible_move, push_outable_square))
+        if self.allchildren is None:
+            neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
+            current_location = self._board.token_location(self._token)
+            push_out_squares = self._board.push_outable_square_ids()
+            push_out_squares.add(current_location)
+            self._available = [isolation.Move(idm, idt) for idm, idt
+                               in itertools.product(neighbors, push_out_squares) if idm != idt]
 
-        for move in moves:
-            child_board = copy.deepcopy(self._board)
-            child_board.make_move(self._token, move)
+            self.allchildren = [
+                Node(self._board,
+                     self._opponent,
+                     [e for e in self._available if e is not selected_move],
+                     is_max=not self._is_max,
+                     last_move=selected_move)
+                for selected_move in self._available]
 
-            self._children.append(Node(child_board,
-                                       self.evaluate(),
-                                       self._children,
-                                       self._opponent,
-                                       self._token,
-                                       not self._is_max))
-
-        return self._children
+        return self.allchildren
 
     def evaluate(self):
-        distance_to_middle, closest_mid = self.get_distance_to_middle(self._board)
+        distance_to_middle, closest_mid = self._get_distance_to_middle(self._board)
 
         opponent_moves = self._board.neighbor_tiles(self._board.token_location(self._opponent))
         our_moves = self._board.neighbor_tiles(self._board.token_location(self._token))
@@ -82,6 +72,21 @@ class Node:
 
         h_value = distance_to_middle + (num_opponent_moves - num_our_moves)
         return h_value
+
+    def _get_distance_to_middle(self, board):
+        middle_spaces = [19, 20, 27, 28]
+
+        current_location = board.token_location(self._token)
+
+        min_distance = board.distance_between(current_location, middle_spaces[0])
+        closest_middle_space = middle_spaces[0]
+
+        for mid in middle_spaces:
+            distance_to_middle = board.distance_between(current_location, mid)
+            if distance_to_middle < min_distance:
+                closest_middle_space = mid
+                min_distance = distance_to_middle
+        return min_distance, closest_middle_space
 
 
 class FuchsiaPlayer(isolation.Player):
@@ -140,7 +145,6 @@ class FuchsiaPlayer(isolation.Player):
 
         distance_to_middle, closest_middle = self.get_distance_to_middle(board)
         dir_x, dir_y = board.direction(self_location, closest_middle)
-
 
     def _h(self, board):
         distance_to_middle, closest_mid = self.get_distance_to_middle(board)

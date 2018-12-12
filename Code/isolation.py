@@ -135,7 +135,8 @@ class Board:
 
         cls.CORNER_SQUARE_IDS = frozenset((0, n - 1, (m - 1) * n, m * n - 1))
 
-        # Compute the Chebyshev values
+        # Compute the Chebyshev values and store in a dictionary
+        # Key: (id, radius), Value: frozenset of square id's radius away
         cls.CHEBYSHEV = {}
 
         def compute_chebyshevs(id):
@@ -147,7 +148,7 @@ class Board:
             cls.CHEBYSHEV[(id, 0)] = frozenset({id})
             cls.CHEBYSHEV[(id, 1)] = Board.NEIGHBOR_SETS[id]
             radius = 1
-            while id < max(Board.M, Board.N) and cls.CHEBYSHEV[(id, radius)]:
+            while radius < max(Board.M, Board.N) and cls.CHEBYSHEV[(id, radius)]:
                 # Compute the squares at the next radius
                 squares = cls.CHEBYSHEV[(id, radius)]
                 surrounding_squares = set()
@@ -247,7 +248,7 @@ class Board:
         :param square_id2: a square id
         :return: a tuple (dx, dy), where -N < dx < N and
                  -M < dy < M. A positive value of dx
-                 indicates that square 2 is below square 1.
+                 indicates that square 2 is below square 2.
                  A positive value of dy indicates that square 2
                  is to the right of square 1.
         """
@@ -479,6 +480,7 @@ class Match:
             print()
             player = self._blue_player
             player_square_id = self._board.token_location(player.token())
+            move = None
             while self._board.neighbor_tiles(player_square_id):
                 print()
                 print(self._board)
@@ -506,6 +508,7 @@ class Match:
             print("OOPS! Something went wrong.")
             print(self._board.square_id_map())
             print(self._board)
+            print(move)
             print(e)
             print(self.script())
             sys.exit(10)
