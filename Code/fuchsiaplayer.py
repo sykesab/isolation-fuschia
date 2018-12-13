@@ -234,15 +234,16 @@ class FuchsiaPlayer(isolation.Player):
         opponent_moves = list(board.neighbor_tiles(board.token_location(self._opponent)))
         our_moves = list(board.neighbor_tiles(board.token_location(self._token)))
         best_move = len(board.neighbor_tiles(opponent_moves[0])) - len(our_moves) + min_distance_to_middle
+        punch_out = opponent_moves[0]
 
         for move in opponent_moves:
             possible_move = len(board.neighbor_tiles(move)) - len(our_moves) + min_distance_to_middle
             if possible_move >= best_move:
-                if move != move_to_tile:
-                    best_move = move
+                if move != move_to_tile and not board.is_pushed_out(move):
+                    best_move = possible_move
+                    punch_out = move
 
-        to_square_id = best_move
-        return to_square_id
+        return punch_out
 
     def minimax_alpha_beta(self, n, a, b, depth=0):
         best = None
@@ -285,7 +286,7 @@ if __name__ == '__main__':
     # Create a match
     isolation.Board.set_dimensions(6, 8)
     match = isolation.Match(FuchsiaPlayer('Blue', isolation.Board.BLUE_TOKEN),
-                            randomplayer.RandomPlayer('Red', isolation.Board.RED_TOKEN),
+                            FuchsiaPlayer('Red', isolation.Board.RED_TOKEN),
                             isolation.Board())
     match.start_play()
 
