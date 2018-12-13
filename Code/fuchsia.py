@@ -113,7 +113,7 @@ class Node:
                f'{self._move}\navailable:\n' + '\n'.join(str(move) for move in self._available)
 
 
-class FuchsiaPlayer(isolation.Player):
+class PlayerAgent(isolation.Player):
 
     def __init__(self, name, token):
         """
@@ -298,15 +298,15 @@ if __name__ == '__main__':
     isolation.Board.set_dimensions(6, 8)
     board = isolation.Board()
     # board.set_state(16, 20, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,14, 15, 24, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,46, 47])
-    board.set_state(13, 9, [0, 4, 5, 6, 8, 12, 18, 19, 21, 23, 24, 25, 26, 28, 30, 32, 33, 34, 35, 36, 41, 42, 43, 44])
-    match = isolation.Match(FuchsiaPlayer('Blue', isolation.Board.BLUE_TOKEN),
-                            FuchsiaPlayer('Red', isolation.Board.RED_TOKEN),
+    # board.set_state(13, 9, [0, 4, 5, 6, 8, 12, 18, 19, 21, 23, 24, 25, 26, 28, 30, 32, 33, 34, 35, 36, 41, 42, 43, 44])
+    match = isolation.Match(PlayerAgent('Blue', isolation.Board.BLUE_TOKEN),
+                            randomplayer.RandomPlayer('Red', isolation.Board.RED_TOKEN),
                             board)
     match.start_play()
 
     # # Play 100 more matches
     # for i in range(100):
-    #     match = isolation.Match(FuchsiaPlayer('Blue', isolation.Board.BLUE_TOKEN),
+    #     match = isolation.Match(PlayerAgent('Blue', isolation.Board.BLUE_TOKEN),
     #                             randomplayer.RandomPlayer('Red', isolation.Board.RED_TOKEN),
     #                             isolation.Board())
     #     print(match.start_play())

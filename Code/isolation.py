@@ -283,6 +283,8 @@ class Board:
         if to_square_id not in self.NEIGHBOR_SETS[token_square_id]:
             raise IllegalMove('Square {} is not a legal move from {}'.format(to_square_id,
                                                                              token_square_id))
+        if to_square_id not in self.neighbor_tiles(token_square_id):
+            raise IllegalMove(f'Illegal move from {token_square_id} to {to_square_id}')
 
         if to_square_id in self._untiled_squares:
             raise IllegalMove('Square {} is pushed out'.format(to_square_id))
@@ -474,44 +476,46 @@ class Match:
         Play the game until the game ends
         :return: winning player
         """
-        try:
-            print('Begin play!')
-            print(self._board.square_id_map())
+        # try:
+        print('Begin play!')
+        print(self._board.square_id_map())
+        print()
+        player = self._blue_player
+        player_square_id = self._board.token_location(player.token())
+        move = None
+        while self._board.neighbor_tiles(player_square_id):
             print()
-            player = self._blue_player
-            player_square_id = self._board.token_location(player.token())
-            move = None
-            while self._board.neighbor_tiles(player_square_id):
-                print()
-                print(self._board)
-
-                # This player has a move
-                move = player.take_turn(self._board)
-                self._board.make_move(player.token(), move)
-
-                # Next player
-                player = self._red_player if player is self._blue_player else self._blue_player
-                player_square_id = self._board.token_location(player.token())
-
-                # print(self.script())
-
-            # We have a winner!
-            self ._winner = self._red_player if player is self._blue_player else self._blue_player
             print(self._board)
-            moves = self._board.moves()
-            print(len(moves), 'moves.')
-            print('Congratulations,', self._winner.name())
+
+            # This player has a move
+            move = player.take_turn(self._board)
+            self._board.make_move(player.token(), move)
+
+            # Next player
+            player = self._red_player if player is self._blue_player else self._blue_player
+            player_square_id = self._board.token_location(player.token())
 
             # print(self.script())
-            self.script_csv(str(datetime.datetime.now()) + '.csv')
-        except Exception as e:
-            print("OOPS! Something went wrong.")
-            print(self._board.square_id_map())
-            print(self._board)
-            print(move)
-            print(e)
-            print(self.script())
-            sys.exit(10)
+
+        # We have a winner!
+        self ._winner = self._red_player if player is self._blue_player else self._blue_player
+        print(self._board)
+        moves = self._board.moves()
+        print(len(moves), 'moves.')
+        print('Congratulations,', self._winner.name())
+
+        # print(self.script())
+        now = str(datetime.datetime.now()).replace(':', '_').replace('/', '-')
+
+        self.script_csv(now + '.csv')
+        # except Exception as e:
+        #     print("OOPS! Something went wrong.")
+        #     print(self._board.square_id_map())
+        #     print(self._board)
+        #     print(move)
+        #     print(e)
+        #     print(self.script())
+        #     sys.exit(10)
 
     def moves(self):
         """
