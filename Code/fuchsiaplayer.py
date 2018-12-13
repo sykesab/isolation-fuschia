@@ -213,11 +213,11 @@ class FuchsiaPlayer(isolation.Player):
         opponent_moves = list(board.neighbor_tiles(board.token_location(self._opponent)))
         # x = our_moves[0]
         # possible_moves = isolation.Board.neighbor_tiles(x)
-        best_move = len(board.neighbor_tiles(our_moves[0])) + min_distance_to_middle
+        best_move = len(board.neighbor_tiles(our_moves[0])) - len(opponent_moves)
         # best_move = 0
 
         for move in our_moves:
-            possible_move = len(board.neighbor_tiles(move)) + min_distance_to_middle
+            possible_move = len(board.neighbor_tiles(move)) - len(opponent_moves)
             if possible_move >= best_move:
                 if move not in board.pushed_out_square_ids():
                     # if len(list_of_prev_moves) > 0 and move != list_of_prev_moves[-1]:
