@@ -213,25 +213,30 @@ class FuchsiaPlayer(isolation.Player):
         opponent_moves = list(board.neighbor_tiles(board.token_location(self._opponent)))
         # x = our_moves[0]
         # possible_moves = isolation.Board.neighbor_tiles(x)
+        best_moves = our_moves[0]
         best_move = len(board.neighbor_tiles(our_moves[0])) - len(opponent_moves)
         # best_move = 0
 
         for move in our_moves:
-            possible_move = len(board.neighbor_tiles(move)) - len(opponent_moves)
+            distance_to_the_middle = board.distance_between(move, closest_middle_space)
+            possible_move = len(board.neighbor_tiles(move)) - len(opponent_moves) - distance_to_the_middle
+
             if possible_move >= best_move:
                 if move not in board.pushed_out_square_ids():
                     # if len(list_of_prev_moves) > 0 and move != list_of_prev_moves[-1]:
-                    best_move = move
+                    best_move = possible_move
+                    best_moves = move
 
-        return best_move
+        return best_moves
 
     def punch_out_early_strat(self, board, move_to_tile):
         min_distance_to_middle, closest_middle_space = self.get_distance_to_middle(board)
         opponent_moves = list(board.neighbor_tiles(board.token_location(self._opponent)))
-        best_move = len(board.neighbor_tiles(opponent_moves[0])) + min_distance_to_middle
+        our_moves = list(board.neighbor_tiles(board.token_location(self._token)))
+        best_move = len(board.neighbor_tiles(opponent_moves[0])) - len(our_moves) + min_distance_to_middle
 
         for move in opponent_moves:
-            possible_move = len(board.neighbor_tiles(move)) + min_distance_to_middle
+            possible_move = len(board.neighbor_tiles(move)) - len(our_moves) + min_distance_to_middle
             if possible_move >= best_move:
                 if move != move_to_tile:
                     best_move = move

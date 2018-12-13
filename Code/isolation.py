@@ -192,8 +192,8 @@ class Board:
         """
         self._token_locations[Board.BLUE_TOKEN] = blue_square_id
         self._token_locations[Board.RED_TOKEN] = red_square_id
-        self._untiled_squares = frozenset(pushed_out_ids)
-        self._tiled_squares = frozenset(set(range(self.M * self.N)).difference(self._untiled_squares))
+        self._untiled_squares = set(pushed_out_ids)
+        self._tiled_squares = set(set(range(self.M * self.N)).difference(self._untiled_squares))
 
     def moves(self):
         """
