@@ -1,20 +1,18 @@
 import isolation
 import randomplayer
-import random
 import math
 import copy
 import itertools
 
 
 class Node:
-    def __init__(self, board, move, token, is_max=True, last_move=None):
+    def __init__(self, board, move, token, is_max=True):
         """
 
         :param board: a Board object
         :param move: a Move to be made by the opponent first to get to this node
         :param token: the Player token that is currently moving
         :param is_max: True if this row is a Max row
-        :param last_move: the last Move made.
         """
         self._board = copy.deepcopy(board)
         self._token = token
@@ -65,9 +63,6 @@ class Node:
     def move(self):
         return self._move
 
-    def last_move(self):
-        return self._last_move
-
     def children(self):
         if self.allchildren is None:
             # neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
@@ -81,8 +76,7 @@ class Node:
                 Node(self._board,
                      selected_move,
                      self._opponent,
-                     is_max=not self._is_max,
-                     last_move=selected_move)
+                     is_max=not self._is_max)
                 for selected_move in self._available]
 
         return self.allchildren
@@ -217,7 +211,7 @@ class FuchsiaPlayer(isolation.Player):
 
         for move in our_moves:
             distance_to_the_middle = board.distance_between(move, closest_middle_space)
-            possible_move = len(board.neighbor_tiles(move)) - len(opponent_moves) - distance_to_the_middle
+            possible_move = len(board.neighbor_tiles(move)) - len(opponent_moves) - (.5 * distance_to_the_middle)
 
             if possible_move >= best_move:
                 if move not in board.pushed_out_square_ids():
@@ -303,9 +297,10 @@ if __name__ == '__main__':
     # # Create a match
     isolation.Board.set_dimensions(6, 8)
     board = isolation.Board()
-    #board.set_state(16, 20, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,14, 15, 24, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,46, 47])
+    # board.set_state(16, 20, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,14, 15, 24, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,46, 47])
+    board.set_state(13, 9, [0, 4, 5, 6, 8, 12, 18, 19, 21, 23, 24, 25, 26, 28, 30, 32, 33, 34, 35, 36, 41, 42, 43, 44])
     match = isolation.Match(FuchsiaPlayer('Blue', isolation.Board.BLUE_TOKEN),
-                            randomplayer.RandomPlayer('Red', isolation.Board.RED_TOKEN),
+                            FuchsiaPlayer('Red', isolation.Board.RED_TOKEN),
                             board)
     match.start_play()
 
