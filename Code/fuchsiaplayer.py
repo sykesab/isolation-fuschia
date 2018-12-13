@@ -10,31 +10,35 @@ class Node:
     def __init__(self, board, move, token, is_max=True, last_move=None):
         """
 
-        :param board: a copy of the Board object
-        :param move: a Move to be made
+        :param board: a Board object
+        :param move: a Move to be made by the opponent first to get to this node
         :param token: the Player token that is currently moving
         :param is_max: True if this row is a Max row
         :param last_move: the last Move made.
         """
-        self._board = board
+        self._board = copy.deepcopy(board)
         self._token = token
-        self._board.make_move(self._token, move)
-
+        self._move = move
+        self._is_max = is_max
         if token is isolation.Board.RED_TOKEN:
             self._opponent = isolation.Board.BLUE_TOKEN
         else:
             self._opponent = isolation.Board.RED_TOKEN
 
-        neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
-        current_location = self._board.token_location(self._token)
+        if move:
+            self._board.make_move(self._opponent, move)
+
+
+        token = self._token # if is_max else self._opponent
+        neighbors = self._board.neighbor_tiles(self._board.token_location(token))
+        current_location = self._board.token_location(token)
         push_out_squares = self._board.push_outable_square_ids()
         push_out_squares.add(current_location)
         self._available = [isolation.Move(idm, idt) for idm, idt
                           in itertools.product(neighbors, push_out_squares) if idm != idt]
 
-        self._move = move
-        self._is_max = is_max
-        self._last_move = last_move
+
+        # self._last_move = last_move
         self.allchildren = None
 
     def is_leaf(self):
@@ -58,6 +62,12 @@ class Node:
     def is_max(self):
         return self._is_max
 
+    def move(self):
+        return self._move
+
+    def last_move(self):
+        return self._last_move
+
     def children(self):
         if self.allchildren is None:
             # neighbors = self._board.neighbor_tiles(self._board.token_location(self._token))
@@ -68,7 +78,7 @@ class Node:
             #                   in itertools.product(neighbors, push_out_squares) if idm != idt]
 
             self.allchildren = [
-                Node(copy.deepcopy(self._board),
+                Node(self._board,
                      selected_move,
                      self._opponent,
                      is_max=not self._is_max,
@@ -78,15 +88,14 @@ class Node:
         return self.allchildren
 
     def evaluate(self):
-        distance_to_middle, closest_mid = self._get_distance_to_middle(self._board)
-
+        distance_to_middle, closest_middle_space = self._get_distance_to_middle(self._board)
         opponent_moves = self._board.neighbor_tiles(self._board.token_location(self._opponent))
         our_moves = self._board.neighbor_tiles(self._board.token_location(self._token))
 
         num_opponent_moves = len(opponent_moves)
         num_our_moves = len(our_moves)
 
-        h_value = distance_to_middle + (num_opponent_moves - num_our_moves)
+        h_value = (num_our_moves - num_opponent_moves)# - distance_to_middle
         return h_value
 
     def _get_distance_to_middle(self, board):
@@ -103,6 +112,11 @@ class Node:
                 closest_middle_space = mid
                 min_distance = distance_to_middle
         return min_distance, closest_middle_space
+
+
+    def __str__(self):
+        return f'Node {self._is_max},\n{self._board.square_id_map()}\n\n{self._board}\n{self._token}, {self._opponent}\n' +\
+               f'{self._move}\navailable:\n' + '\n'.join(str(move) for move in self._available)
 
 
 class FuchsiaPlayer(isolation.Player):
@@ -128,42 +142,26 @@ class FuchsiaPlayer(isolation.Player):
 
         print("\n{} taking turn: \n".format(self._name), end='')
 
-        # h_value = self._h(board)
-        #
-        # Collect board state info to generate a move from
-        # space_id = board.token_location(self._token)
-        # neighbors = board.neighbor_tiles(space_id)
-        # print('possible moves:', neighbors)
-        # tiled_spaces = board.push_outable_square_ids()
+        tiles_remaining = len(board.push_outable_square_ids())
 
-        # Select a square to move to and a tile to push out.
-        # Once a neighbor square is chosen to move to,
-        # that square can no longer be pushed out, but
-        # the square vacated might be able to be pushed out
-        # to_space_id = random.choice(list(neighbors))
+        if tiles_remaining >= 15:
+            return self.early_game_strategy(board)
+        else:
+            n = Node(board, None, self._token)
 
-        # tiled_spaces.discard(to_space_id)
-        # if space_id not in board.start_squares():
-        #     tiled_spaces.add(space_id)
-        # tiled_spaces.add(space_id)
-        # print('possible push outs:', tiled_spaces)
+            score, best_node = self.minimax_alpha_beta(n, -math.inf, math.inf)
 
-        # push_out_space_id = random.choice(list(tiled_spaces))
-
-        # print('    Moving to', to_space_id, 'and pushing out', push_out_space_id)
-
-        neighbors = board.neighbor_tiles(board.token_location(self._token))
-        current_location = board.token_location(self._token)
-        push_out_squares = board.push_outable_square_ids()
-        push_out_squares.add(current_location)
-        #available = [isolation.Move(idm, idt) for idm, idt
-                     #in itertools.product(neighbors, push_out_squares) if idm != idt]
-
-        #n = Node(board, self._token, available)
-
-        #score, move = self.minimax_alpha_beta(n, -math.inf, math.inf)
-        # print('   ', move)
-        return self.early_game_strategy(board)
+            # When minimax returns n, if n was the initial node passed in, then the NoneType error occurs
+            # because there is no move to get to that node.
+            #
+            # It will return n when n is a leaf node or the depth has been reached.
+            # The only time it will be None is if it is a leaf node.
+            if best_node is None:
+                return self.early_game_strategy(board)
+            else:
+                move = best_node.move()
+                print(f'{self._name} {move}')
+                return move
 
     def choose_move(self, board):
         self_location = board.token_location(self._token)
@@ -245,19 +243,35 @@ class FuchsiaPlayer(isolation.Player):
         return to_square_id
 
     def minimax_alpha_beta(self, n, a, b, depth=0):
-        best = None
+        """
+        Return a pair (best_score, best_node) where best_score is
+        min or max and best_node is the node associated with that score
+        :param n:
+        :param a:
+        :param b:
+        :param depth:
+        :return:
+        """
 
-        if n.is_leaf():
-            return n.evaluate(), None
+        # print(' * ' * depth, f'a={a}, b={b}\n', n)
+        best_node = n
+
+        if n.is_leaf() or depth > 2:
+            if n.move() is None:
+                pass
+            return n.evaluate(), n
         elif n.is_max():
             for child_node in n.children():
                 score, path = self.minimax_alpha_beta(child_node, a, b, depth + 1)
                 if score >= b:
-                    return score, None
+                    return score, None   # Quit searching
                 if score > a:
                     a = score
-                    best = path
-            return a, best
+                    best_node = child_node
+
+            if best_node.move() is None:
+                pass
+            return a, best_node
         else:
             for child_node in n.children():
                 score, path = self.minimax_alpha_beta(child_node, a, b, depth + 1)
@@ -265,8 +279,11 @@ class FuchsiaPlayer(isolation.Player):
                     return score, None
                 if score < b:
                     b = score
-                    best = path
-            return b, best
+                    best_node = child_node
+
+            if best_node.move() is None:
+                pass
+            return b, best_node
 
     def board_is_end_state(self, board):
         self_location = board.token_location(self._token)
@@ -282,16 +299,19 @@ class FuchsiaPlayer(isolation.Player):
 
 
 if __name__ == '__main__':
-    # Create a match
+    # # Create a match
     isolation.Board.set_dimensions(6, 8)
+    board = isolation.Board()
+    #board.set_state(16, 20, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,14, 15, 24, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45,46, 47])
     match = isolation.Match(FuchsiaPlayer('Blue', isolation.Board.BLUE_TOKEN),
                             randomplayer.RandomPlayer('Red', isolation.Board.RED_TOKEN),
-                            isolation.Board())
+                            board)
     match.start_play()
 
     # # Play 100 more matches
     # for i in range(100):
-    #     match = isolation.Match(RandomPlayer('Blue', isolation.Board.BLUE_TOKEN),
-    #                             RandomPlayer('Red', isolation.Board.RED_TOKEN))
+    #     match = isolation.Match(FuchsiaPlayer('Blue', isolation.Board.BLUE_TOKEN),
+    #                             randomplayer.RandomPlayer('Red', isolation.Board.RED_TOKEN),
+    #                             isolation.Board())
     #     print(match.start_play())
     #     print('*' * 40)
